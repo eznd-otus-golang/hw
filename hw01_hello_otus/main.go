@@ -1,5 +1,9 @@
 package main
 
+import "golang.org/x/example/hello/reverse"
+
+const message = "Hello, OTUS!"
+
 func main() {
-	// Place your code here.
+	println(reverse.String(message))
 }
