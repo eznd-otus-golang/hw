@@ -2,14 +2,16 @@ package hw02unpackstring
 
 import (
 	"errors"
+	"strings"
 )
 
 var ErrInvalidString = errors.New("invalid string")
 
 const asciiZero = 48
 
-func Unpack(s string) (res string, err error) {
+func Unpack(s string) (string, error) {
 	src := []rune(s)
+	b := strings.Builder{}
 
 	inCounter := false
 	for pos := range src {
@@ -19,25 +21,25 @@ func Unpack(s string) (res string, err error) {
 		}
 
 		if isDigit(src[pos]) {
-			err = ErrInvalidString
-			break
+			return "", ErrInvalidString
 		}
 
 		if pos == len(src)-1 {
-			res += string(src[pos])
+			_, _ = b.WriteRune(src[pos])
 			break
 		}
 
 		if isDigit(src[pos+1]) {
 			if atoi(src[pos+1]) > 0 {
-				res += repeat(src[pos], atoi(src[pos+1]))
+				_, _ = b.WriteString(strings.Repeat(string(src[pos]), atoi(src[pos+1])))
 			}
 			inCounter = true
-		} else {
-			res += string(src[pos])
+			continue
 		}
+
+		b.WriteRune(src[pos])
 	}
-	return
+	return b.String(), nil
 }
 
 func atoi(s rune) int {
@@ -46,11 +48,4 @@ func atoi(s rune) int {
 
 func isDigit(s rune) bool {
 	return s >= asciiZero && s <= asciiZero+9
-}
-
-func repeat(s rune, n int) (res string) {
-	for i := 0; i < n; i++ {
-		res += string(s)
-	}
-	return
 }
