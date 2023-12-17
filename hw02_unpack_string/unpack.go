@@ -2,50 +2,66 @@ package hw02unpackstring
 
 import (
 	"errors"
+	"strconv"
 	"strings"
+	"unicode"
 )
 
 var ErrInvalidString = errors.New("invalid string")
 
-const asciiZero = 48
-
 func Unpack(s string) (string, error) {
-	src := []rune(s)
-	b := strings.Builder{}
+	var b strings.Builder
+	var buffered string
+	var escaped = false
 
-	inCounter := false
-	for pos := range src {
-		if inCounter {
-			inCounter = false
-			continue
-		}
+	for _, currentRune := range s {
+		currentChar := string(currentRune)
 
-		if isDigit(src[pos]) {
-			return "", ErrInvalidString
-		}
+		switch {
+		case isEscapeSymbol(currentRune) && !escaped:
+			b.WriteString(buffered)
+			buffered = ""
+			escaped = true
 
-		if pos == len(src)-1 {
-			_, _ = b.WriteRune(src[pos])
-			break
-		}
+		case isEscapeSymbol(currentRune) && escaped:
+			b.WriteString(buffered)
+			buffered = currentChar
+			escaped = false
 
-		if isDigit(src[pos+1]) {
-			if atoi(src[pos+1]) > 0 {
-				_, _ = b.WriteString(strings.Repeat(string(src[pos]), atoi(src[pos+1])))
+		case unicode.IsDigit(currentRune) && !escaped:
+			if buffered == "" {
+				return "", ErrInvalidString
 			}
-			inCounter = true
-			continue
-		}
+			n, err := strconv.Atoi(currentChar)
+			if err != nil {
+				return "", err
+			}
+			b.WriteString(strings.Repeat(buffered, n))
+			buffered = ""
 
-		b.WriteRune(src[pos])
+		case unicode.IsDigit(currentRune) && escaped:
+			b.WriteString(buffered)
+			buffered = currentChar
+			escaped = false
+
+		default:
+			b.WriteString(buffered)
+			buffered = currentChar
+			if escaped {
+				escaped = false
+			}
+		}
 	}
+
+	if escaped {
+		return "", ErrInvalidString
+	}
+
+	b.WriteString(buffered)
+
 	return b.String(), nil
 }
 
-func atoi(s rune) int {
-	return int(s) - asciiZero
-}
-
-func isDigit(s rune) bool {
-	return s >= asciiZero && s <= asciiZero+9
+func isEscapeSymbol(r rune) bool {
+	return string(r) == `\`
 }
