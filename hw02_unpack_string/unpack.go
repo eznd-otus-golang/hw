@@ -12,7 +12,7 @@ var ErrInvalidString = errors.New("invalid string")
 func Unpack(s string) (string, error) {
 	var b strings.Builder
 	var buffered string
-	var escaped = false
+	escaped := false
 
 	for _, currentRune := range s {
 		currentChar := string(currentRune)
